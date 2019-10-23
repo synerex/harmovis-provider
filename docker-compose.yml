@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  harmovis_provider:
+    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: harmovis_provider
+    volumes:
+      - .:/go/src/github.com/synerex/provider/harmovis
+    ports:
+      - "10080:10080"
+    networks: 
+      - synerex_net
+      - default
+networks:
+  synerex_net:
+    external: true
