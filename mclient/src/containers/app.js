@@ -7,7 +7,7 @@ import Controller from '../components/controller';
 
 import * as io from 'socket.io-client';
 
-const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN; //Acquire Mapbox accesstoken
+//const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN; //Acquire Mapbox accesstoken
 
 class App extends Container {
     constructor(props){
@@ -22,7 +22,8 @@ class App extends Container {
 	    moveOptionVisible: false,
 	    depotOptionVisible: false,
 	    heatmapVisible: false,
-	    optionChange: false,
+		optionChange: false,
+		mapbox_token: '',
 	    popup: [0,0, '']
 	};
 
@@ -30,6 +31,10 @@ class App extends Container {
 	socket.on('connect', ()=>{console.log("Socket.IO connected!")});
 	socket.on('event', this.getEvent.bind(this));
 	socket.on('disconnect', ()=>{console.log("Socket.IO disconnected!")});
+	socket.on('mapbox_token', (token) => {
+		console.log('Token Got:' + token)
+		this.setState({ mapbox_token: token })
+	})
 	
     }
 
@@ -134,7 +139,7 @@ class App extends Container {
     render() {
 	const props = this.props;
 	const { actions, clickedObject, inputFileName, viewport, deoptsData, loading,
-		routePaths, lightSettings, movesbase, movedData } = props;
+		routePaths, lightSettings, movesbase, movedData, mapboxtoken } = props;
 //	const { movesFileName } = inputFileName;
 	const optionVisible = false;
 	const onHover = (el) => {
@@ -152,6 +157,21 @@ class App extends Container {
 	    }
 	};
 	
+	const visLayers =
+		(this.state.mapbox_token.length > 0) ?
+			<HarmoVisLayers
+		    	viewport={viewport} actions={actions}
+				mapboxApiAccessToken={this.state.mapbox_token}		
+		    	layers={[
+					this.state.moveDataVisible && movedData.length > 0 ?
+		    		new MovesLayer({ viewport, routePaths, movesbase, movedData,
+				    	 clickedObject, actions, lightSettings,
+				    	visible: this.state.moveDataVisible,
+				     	optionVisible: this.state.moveOptionVisible,
+				     	optionChange: this.state.optionChange,
+				     	onHover}) :null
+	  	  		]}
+			/>	: <LoadingIcon loading={true} />
 
 	return (
 		<div>
@@ -163,19 +183,7 @@ class App extends Container {
 	    getOptionChangeChecked ={this.getOptionChangeChecked.bind(this)}
 		/>
 		<div className="harmovis_area">
-		<HarmoVisLayers
-	    viewport={viewport} actions={actions}
-	    mapboxApiAccessToken={MAPBOX_TOKEN}
-	    layers={[
-		this.state.moveDataVisible && movedData.length > 0 ?
-		    new MovesLayer({ viewport, routePaths, movesbase, movedData,
-				     clickedObject, actions, lightSettings,
-				     visible: this.state.moveDataVisible,
-				     optionVisible: this.state.moveOptionVisible,
-				     optionChange: this.state.optionChange,
-				     onHover}) :null
-	    ]}
-	        />
+			{visLayers}
 		</div>
 		<svg width={viewport.width} height={viewport.height} className="harmovis_overlay">
 		<g fill="white" fontSize="12">
